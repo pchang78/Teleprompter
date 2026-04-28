@@ -76,6 +76,19 @@ function updateMargins() {
   rightMarginValue.textContent = `${rightMargin} px`;
 }
 
+function adjustMargins(delta) {
+  const leftMin = Number(leftMarginSlider.min);
+  const leftMax = Number(leftMarginSlider.max);
+  const rightMin = Number(rightMarginSlider.min);
+  const rightMax = Number(rightMarginSlider.max);
+
+  leftMargin = Math.max(leftMin, Math.min(leftMax, leftMargin + delta));
+  rightMargin = Math.max(rightMin, Math.min(rightMax, rightMargin + delta));
+  leftMarginSlider.value = String(leftMargin);
+  rightMarginSlider.value = String(rightMargin);
+  updateMargins();
+}
+
 function updateMirrorTransform() {
   const scaleX = mirrorModeToggle.checked ? -1 : 1;
   const scaleY = mirrorVerticalToggle.checked ? -1 : 1;
@@ -215,7 +228,7 @@ mirrorVerticalToggle.addEventListener("change", () => {
   }
 });
 
-fullscreenBtn.addEventListener("click", async () => {
+async function toggleFullscreen() {
   const isFullscreen = document.fullscreenElement === prompterViewport;
   try {
     if (isFullscreen) {
@@ -227,7 +240,9 @@ fullscreenBtn.addEventListener("click", async () => {
     // Keep app behavior stable if fullscreen is blocked by browser policy.
     console.error("Fullscreen toggle failed:", error);
   }
-});
+}
+
+fullscreenBtn.addEventListener("click", toggleFullscreen);
 
 document.addEventListener("keydown", (event) => {
   if (document.activeElement === scriptInput) {
@@ -258,6 +273,32 @@ document.addEventListener("keydown", (event) => {
     case "ArrowRight":
       event.preventDefault();
       adjustScrollSpeed(10);
+      break;
+    case "<":
+      event.preventDefault();
+      adjustMargins(-10);
+      break;
+    case ">":
+      event.preventDefault();
+      adjustMargins(10);
+      break;
+    case "f":
+      event.preventDefault();
+      toggleFullscreen();
+      break;
+    case "F":
+      event.preventDefault();
+      toggleFullscreen();
+      break;
+    case "v":
+      event.preventDefault();
+      mirrorVerticalToggle.checked = !mirrorVerticalToggle.checked;
+      mirrorVerticalToggle.dispatchEvent(new Event("change"));
+      break;
+    case "V":
+      event.preventDefault();
+      mirrorVerticalToggle.checked = !mirrorVerticalToggle.checked;
+      mirrorVerticalToggle.dispatchEvent(new Event("change"));
       break;
     default:
       break;
