@@ -20,6 +20,7 @@ let scrollSpeed = Number(speedSlider.value);
 let isScrolling = false;
 let animationFrameId = null;
 let lastTimestamp = null;
+let preciseScrollTop = 0;
 let fontSize = 42;
 let leftMargin = Number(leftMarginSlider.value);
 let rightMargin = Number(rightMarginSlider.value);
@@ -46,7 +47,7 @@ function updatePromptText() {
   if (!hasScript()) {
     prompterText.textContent = "Paste text into the input box to begin.";
     stopScrolling();
-    prompterViewport.scrollTop = 0;
+    setViewportScrollTop(0);
   } else {
     prompterText.textContent = scriptInput.value;
   }
@@ -105,6 +106,16 @@ function setRunningState(nextValue) {
   startPauseBtn.textContent = isScrolling ? "Pause" : "Start";
 }
 
+function getMaxScrollTop() {
+  return Math.max(0, prompterViewport.scrollHeight - prompterViewport.clientHeight);
+}
+
+function setViewportScrollTop(nextScrollTop) {
+  const clampedScrollTop = Math.max(0, Math.min(getMaxScrollTop(), nextScrollTop));
+  preciseScrollTop = clampedScrollTop;
+  prompterViewport.scrollTop = clampedScrollTop;
+}
+
 function getScrollJumpAmount() {
   // Fall back to a readable default if computed line-height is "normal".
   const computedLineHeight = Number.parseFloat(getComputedStyle(prompterText).lineHeight);
@@ -115,9 +126,8 @@ function getScrollJumpAmount() {
 }
 
 function jumpScroll(direction) {
-  const maxScrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
   const nextScrollTop = prompterViewport.scrollTop + direction * getScrollJumpAmount();
-  prompterViewport.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
+  setViewportScrollTop(nextScrollTop);
 }
 
 function scrollLoop(timestamp) {
@@ -133,11 +143,11 @@ function scrollLoop(timestamp) {
   const elapsedSeconds = (timestamp - lastTimestamp) / 1000;
   lastTimestamp = timestamp;
 
-  const maxScrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
+  const maxScrollTop = getMaxScrollTop();
   // Vertical mirror mode scrolls upward, so direction is inverted.
   const direction = isVerticalMirrorEnabled() ? -1 : 1;
-  const nextScrollTop = prompterViewport.scrollTop + direction * scrollSpeed * elapsedSeconds;
-  prompterViewport.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
+  const nextScrollTop = preciseScrollTop + direction * scrollSpeed * elapsedSeconds;
+  setViewportScrollTop(nextScrollTop);
 
   if (!isVerticalMirrorEnabled() && prompterViewport.scrollTop >= maxScrollTop) {
     stopScrolling();
@@ -159,9 +169,10 @@ function startScrolling() {
 
   // Start from the bottom when vertically mirrored so text moves toward the top.
   if (isVerticalMirrorEnabled() && prompterViewport.scrollTop === 0) {
-    prompterViewport.scrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
+    setViewportScrollTop(getMaxScrollTop());
   }
 
+  preciseScrollTop = prompterViewport.scrollTop;
   setRunningState(true);
   lastTimestamp = null;
   animationFrameId = window.requestAnimationFrame(scrollLoop);
@@ -228,9 +239,9 @@ mirrorVerticalToggle.addEventListener("change", () => {
   // Reset position when direction changes to keep expected reading flow.
   stopScrolling();
   if (isVerticalMirrorEnabled()) {
-    prompterViewport.scrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
+    setViewportScrollTop(getMaxScrollTop());
   } else {
-    prompterViewport.scrollTop = 0;
+    setViewportScrollTop(0);
   }
 });
 
