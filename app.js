@@ -28,6 +28,7 @@ const MIN_FONT_SIZE = 24;
 const MAX_FONT_SIZE = 90;
 const SCROLL_JUMP_LINES = 3;
 
+// Keep fullscreen button text in sync with actual browser state.
 function updateFullscreenButtonLabel() {
   const isFullscreen = document.fullscreenElement === prompterViewport;
   fullscreenBtn.textContent = isFullscreen ? "Exit Fullscreen" : "Fullscreen";
@@ -105,6 +106,7 @@ function setRunningState(nextValue) {
 }
 
 function getScrollJumpAmount() {
+  // Fall back to a readable default if computed line-height is "normal".
   const computedLineHeight = Number.parseFloat(getComputedStyle(prompterText).lineHeight);
   const safeLineHeight = Number.isFinite(computedLineHeight)
     ? computedLineHeight
@@ -123,6 +125,7 @@ function scrollLoop(timestamp) {
     return;
   }
 
+  // Initialize on first frame to avoid a large initial time delta.
   if (lastTimestamp === null) {
     lastTimestamp = timestamp;
   }
@@ -131,6 +134,7 @@ function scrollLoop(timestamp) {
   lastTimestamp = timestamp;
 
   const maxScrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
+  // Vertical mirror mode scrolls upward, so direction is inverted.
   const direction = isVerticalMirrorEnabled() ? -1 : 1;
   const nextScrollTop = prompterViewport.scrollTop + direction * scrollSpeed * elapsedSeconds;
   prompterViewport.scrollTop = Math.max(0, Math.min(maxScrollTop, nextScrollTop));
@@ -153,6 +157,7 @@ function startScrolling() {
     return;
   }
 
+  // Start from the bottom when vertically mirrored so text moves toward the top.
   if (isVerticalMirrorEnabled() && prompterViewport.scrollTop === 0) {
     prompterViewport.scrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
   }
@@ -220,6 +225,7 @@ mirrorVerticalToggle.addEventListener("change", () => {
     return;
   }
 
+  // Reset position when direction changes to keep expected reading flow.
   stopScrolling();
   if (isVerticalMirrorEnabled()) {
     prompterViewport.scrollTop = prompterViewport.scrollHeight - prompterViewport.clientHeight;
@@ -245,6 +251,7 @@ async function toggleFullscreen() {
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 
 document.addEventListener("keydown", (event) => {
+  // Avoid hijacking typing shortcuts while user is editing script text.
   if (document.activeElement === scriptInput) {
     return;
   }
@@ -276,10 +283,12 @@ document.addEventListener("keydown", (event) => {
       break;
     case "<":
       event.preventDefault();
+      // Shift+, on US keyboards.
       adjustMargins(-10);
       break;
     case ">":
       event.preventDefault();
+      // Shift+. on US keyboards.
       adjustMargins(10);
       break;
     case "f":
