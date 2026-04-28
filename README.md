@@ -5,7 +5,7 @@ A lightweight web-based teleprompter built with plain HTML, CSS, and JavaScript.
 ## Features
 
 - Paste long-form scripts into the input area
-- Auto-scroll with Start/Pause control
+- Auto-scroll with Start/Pause control (Start is enabled only when script text exists)
 - Adjustable scroll speed (`10` to `300 px/s`)
 - Font size controls
 - Left and right margin controls
@@ -49,6 +49,9 @@ No build tools are required.
 - `Arrow Down`: Scroll ahead a few lines
 - `Arrow Left`: Decrease speed by `10 px/s`
 - `Arrow Right`: Increase speed by `10 px/s`
+- `<` / `>`: Decrease / increase both side margins by `10 px`
+- `f`: Toggle fullscreen
+- `v`: Toggle vertical mirror mode
 
 Note: Keyboard shortcuts are ignored while typing in the script textarea.
 
