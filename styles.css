@@ -1,0 +1,146 @@
+:root {
+  --bg: #0f1115;
+  --panel: #1a1f29;
+  --text: #f5f7fb;
+  --muted: #b2bfd6;
+  --accent: #4f9cff;
+  --border: #2f3a4c;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.section-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.script-section,
+.controls,
+.prompter-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.script-input {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  background: #121722;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.control-btn {
+  border: 1px solid var(--border);
+  background: #182234;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.control-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.control-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.control-range {
+  width: 190px;
+}
+
+.font-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+}
+
+.prompter-viewport {
+  height: 55vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2.2rem 2.6rem;
+  background: #090c12;
+}
+
+.prompter-viewport:fullscreen {
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  padding: 3rem 4rem;
+}
+
+.prompter-text {
+  white-space: pre-wrap;
+  font-size: 42px;
+  line-height: 1.5;
+}
+
+body.light {
+  --bg: #f4f7ff;
+  --panel: #ffffff;
+  --text: #111827;
+  --muted: #445066;
+  --border: #ccd5e4;
+}
+
+body.light .script-input,
+body.light .prompter-viewport {
+  background: #ffffff;
+}
+
+@media (max-width: 800px) {
+  .prompter-viewport {
+    height: 50vh;
+    padding: 1.2rem;
+  }
+
+  .prompter-text {
+    font-size: 34px;
+  }
+}

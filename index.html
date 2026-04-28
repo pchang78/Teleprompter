@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teleprompter MVP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app" aria-label="Teleprompter app">
+      <section class="script-section">
+        <label for="scriptInput" class="section-title">Script Input</label>
+        <textarea
+          id="scriptInput"
+          class="script-input"
+          placeholder="Paste your script here..."
+          aria-label="Script input"
+        ></textarea>
+      </section>
+
+      <section class="controls" aria-label="Teleprompter controls">
+        <button id="startPauseBtn" class="control-btn" disabled>Start</button>
+        <button id="fullscreenBtn" class="control-btn" type="button">Fullscreen</button>
+
+        <label for="speedSlider" class="control-label">
+          Speed
+          <span id="speedValue">50 px/s</span>
+        </label>
+        <input
+          id="speedSlider"
+          class="control-range"
+          type="range"
+          min="10"
+          max="300"
+          value="50"
+          step="5"
+        />
+
+        <label for="leftMarginSlider" class="control-label">
+          Left Margin
+          <span id="leftMarginValue">0 px</span>
+        </label>
+        <input
+          id="leftMarginSlider"
+          class="control-range"
+          type="range"
+          min="0"
+          max="300"
+          value="0"
+          step="5"
+        />
+
+        <label for="rightMarginSlider" class="control-label">
+          Right Margin
+          <span id="rightMarginValue">0 px</span>
+        </label>
+        <input
+          id="rightMarginSlider"
+          class="control-range"
+          type="range"
+          min="0"
+          max="300"
+          value="0"
+          step="5"
+        />
+
+        <div class="font-controls">
+          <span class="control-label">Font Size</span>
+          <button id="fontDownBtn" class="control-btn" type="button" aria-label="Decrease font size">
+            A-
+          </button>
+          <button id="fontUpBtn" class="control-btn" type="button" aria-label="Increase font size">
+            A+
+          </button>
+          <span id="fontSizeValue">42px</span>
+        </div>
+
+        <label class="toggle">
+          <input id="darkModeToggle" type="checkbox" checked />
+          <span>Dark Mode</span>
+        </label>
+
+        <label class="toggle">
+          <input id="mirrorModeToggle" type="checkbox" />
+          <span>Mirror Horizontally</span>
+        </label>
+
+        <label class="toggle">
+          <input id="mirrorVerticalToggle" type="checkbox" />
+          <span>Mirror Vertically</span>
+        </label>
+      </section>
+
+      <section class="prompter-section">
+        <h1 class="section-title">Teleprompter</h1>
+        <div id="prompterViewport" class="prompter-viewport" aria-live="polite">
+          <div id="prompterText" class="prompter-text">
+            Paste text into the input box to begin.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
