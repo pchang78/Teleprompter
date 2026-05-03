@@ -86,6 +86,70 @@ body {
   width: 190px;
 }
 
+.control-select {
+  margin-left: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #121722;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+body.light .control-select {
+  background: #fff;
+  color: var(--text);
+}
+
+.speed-control-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+body.mode-auto .speed-control-group {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.mic-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: #121722;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.mic-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e24a4a;
+  box-shadow: 0 0 0 2px rgba(226, 74, 74, 0.35);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+body.light .mic-status {
+  background: #f0f3f8;
+}
+
 .font-controls {
   display: inline-flex;
   align-items: center;
@@ -119,6 +183,16 @@ body {
   white-space: pre-wrap;
   font-size: 42px;
   line-height: 1.5;
+}
+
+.prompter-text .word {
+  display: inline;
+}
+
+.prompter-text .word.flash {
+  background: rgba(79, 156, 255, 0.35);
+  border-radius: 4px;
+  transition: background 200ms ease;
 }
 
 body.light {

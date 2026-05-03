@@ -1,6 +1,8 @@
 const scriptInput = document.getElementById("scriptInput");
 const prompterViewport = document.getElementById("prompterViewport");
 const prompterText = document.getElementById("prompterText");
+const modeSelect = document.getElementById("modeSelect");
+const micStatus = document.getElementById("micStatus");
 const startPauseBtn = document.getElementById("startPauseBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const speedSlider = document.getElementById("speedSlider");
@@ -25,14 +27,85 @@ let fontSize = 42;
 let leftMargin = Number(leftMarginSlider.value);
 let rightMargin = Number(rightMarginSlider.value);
 
+/** @type {'fixed' | 'auto'} */
+let mode = "fixed";
+
+/** @type {{ text: string, normalized: string, el: HTMLElement }[]} */
+let words = [];
+let currentWordIndex = 0;
+
+/** @type {SpeechRecognition | null} */
+let recognition = null;
+
+/** Tokens consumed from the cumulative transcript string (avoids replay on interim updates). */
+let processedTokenCount = 0;
+
 const MIN_FONT_SIZE = 24;
 const MAX_FONT_SIZE = 90;
 const SCROLL_JUMP_LINES = 3;
+const SPEECH_MATCH_WINDOW = 8;
+const WORD_FLASH_MS = 600;
+const READ_POSITION_RATIO = 0.2;
 
-// Keep fullscreen button text in sync with actual browser state.
-function updateFullscreenButtonLabel() {
-  const isFullscreen = document.fullscreenElement === prompterViewport;
-  fullscreenBtn.textContent = isFullscreen ? "Exit Fullscreen" : "Fullscreen";
+const TOKEN_REGEX = /(\S+|\s+)/g;
+
+function getSpeechRecognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function isSpeechRecognitionSupported() {
+  return typeof getSpeechRecognitionConstructor() === "function";
+}
+
+function normalizeWord(text) {
+  return text.toLowerCase().replace(/[^a-z0-9']/g, "");
+}
+
+function transcriptToNormalizedTokens(transcript) {
+  return transcript
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(normalizeWord)
+    .filter((t) => t.length > 0);
+}
+
+function getCombinedTranscript(results) {
+  let full = "";
+  for (let i = 0; i < results.length; i += 1) {
+    full += results[i][0].transcript;
+  }
+  return full;
+}
+
+function renderWords(rawText) {
+  words = [];
+  prompterText.replaceChildren();
+
+  const matches = rawText.match(TOKEN_REGEX);
+  if (!matches) {
+    return;
+  }
+
+  let wordIndex = 0;
+  for (const token of matches) {
+    if (/^\s+$/.test(token)) {
+      prompterText.appendChild(document.createTextNode(token));
+    } else {
+      const span = document.createElement("span");
+      span.className = "word";
+      span.dataset.i = String(wordIndex);
+      span.textContent = token;
+      const normalized = normalizeWord(token);
+      words.push({ text: token, normalized, el: span });
+      prompterText.appendChild(span);
+      wordIndex += 1;
+    }
+  }
+}
+
+function updateModeBodyClass() {
+  document.body.classList.toggle("mode-auto", mode === "auto");
 }
 
 function hasScript() {
@@ -46,10 +119,17 @@ function updateStartButtonState() {
 function updatePromptText() {
   if (!hasScript()) {
     prompterText.textContent = "Paste text into the input box to begin.";
+    words = [];
+    currentWordIndex = 0;
     stopScrolling();
     setViewportScrollTop(0);
+  } else if (mode === "auto") {
+    renderWords(scriptInput.value);
+    currentWordIndex = 0;
   } else {
     prompterText.textContent = scriptInput.value;
+    words = [];
+    currentWordIndex = 0;
   }
   updateStartButtonState();
 }
@@ -59,6 +139,9 @@ function updateSpeedLabel() {
 }
 
 function adjustScrollSpeed(delta) {
+  if (mode === "auto") {
+    return;
+  }
   const minSpeed = Number(speedSlider.min);
   const maxSpeed = Number(speedSlider.max);
   scrollSpeed = Math.max(minSpeed, Math.min(maxSpeed, scrollSpeed + delta));
@@ -117,7 +200,6 @@ function setViewportScrollTop(nextScrollTop) {
 }
 
 function getScrollJumpAmount() {
-  // Fall back to a readable default if computed line-height is "normal".
   const computedLineHeight = Number.parseFloat(getComputedStyle(prompterText).lineHeight);
   const safeLineHeight = Number.isFinite(computedLineHeight)
     ? computedLineHeight
@@ -130,12 +212,112 @@ function jumpScroll(direction) {
   setViewportScrollTop(nextScrollTop);
 }
 
-function scrollLoop(timestamp) {
-  if (!isScrolling) {
+function tryAdvance(spokenTokens) {
+  for (const token of spokenTokens) {
+    const sliceEnd = Math.min(words.length, currentWordIndex + SPEECH_MATCH_WINDOW);
+    const windowWords = words.slice(currentWordIndex, sliceEnd);
+    const offset = windowWords.findIndex((w) => w.normalized === token);
+    if (offset >= 0) {
+      currentWordIndex += offset + 1;
+      flashAndScrollTo(currentWordIndex - 1);
+    }
+  }
+}
+
+function flashAndScrollTo(wordIndex) {
+  const entry = words[wordIndex];
+  if (!entry?.el) {
     return;
   }
 
-  // Initialize on first frame to avoid a large initial time delta.
+  const { el } = entry;
+  el.classList.add("flash");
+  window.setTimeout(() => {
+    el.classList.remove("flash");
+  }, WORD_FLASH_MS);
+
+  const targetTop = el.offsetTop - prompterViewport.clientHeight * READ_POSITION_RATIO;
+  prompterViewport.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth",
+  });
+}
+
+function handleSpeechResult(event) {
+  if (!isScrolling || mode !== "auto") {
+    return;
+  }
+
+  const full = getCombinedTranscript(event.results);
+  let allTokens = transcriptToNormalizedTokens(full);
+
+  if (allTokens.length < processedTokenCount) {
+    processedTokenCount = 0;
+  }
+
+  const newTokens = allTokens.slice(processedTokenCount);
+  processedTokenCount = allTokens.length;
+
+  if (newTokens.length > 0) {
+    tryAdvance(newTokens);
+  }
+}
+
+function handleSpeechError(event) {
+  if (event.error === "no-speech" || event.error === "aborted") {
+    return;
+  }
+  if (event.error === "not-allowed") {
+    window.alert("Microphone permission is required for Automatic Scrolling.");
+    stopScrolling();
+    return;
+  }
+  console.error("Speech recognition error:", event.error);
+}
+
+function stopRecognition() {
+  if (recognition !== null) {
+    recognition.onend = null;
+    try {
+      recognition.stop();
+    } catch {
+      // Ignore if already stopped.
+    }
+    recognition = null;
+  }
+  micStatus.hidden = true;
+}
+
+function ensureRecognition() {
+  const Ctor = getSpeechRecognitionConstructor();
+  if (!Ctor) {
+    return null;
+  }
+
+  const r = new Ctor();
+  r.continuous = true;
+  r.interimResults = true;
+  r.lang = "en-US";
+  r.onresult = handleSpeechResult;
+  r.onerror = handleSpeechError;
+  r.onend = () => {
+    if (isScrolling && mode === "auto" && recognition === r) {
+      try {
+        r.start();
+      } catch {
+        // Already running or invalid state; ignore.
+      }
+    }
+  };
+
+  return r;
+}
+
+function scrollLoop(timestamp) {
+  if (!isScrolling || mode !== "fixed") {
+    return;
+  }
+
   if (lastTimestamp === null) {
     lastTimestamp = timestamp;
   }
@@ -144,7 +326,6 @@ function scrollLoop(timestamp) {
   lastTimestamp = timestamp;
 
   const maxScrollTop = getMaxScrollTop();
-  // Vertical mirror mode scrolls upward, so direction is inverted.
   const direction = isVerticalMirrorEnabled() ? -1 : 1;
   const nextScrollTop = preciseScrollTop + direction * scrollSpeed * elapsedSeconds;
   setViewportScrollTop(nextScrollTop);
@@ -167,7 +348,44 @@ function startScrolling() {
     return;
   }
 
-  // Start from the bottom when vertically mirrored so text moves toward the top.
+  if (mode === "auto") {
+    if (!isSpeechRecognitionSupported()) {
+      window.alert(
+        "Automatic Scrolling requires a browser that supports the Web Speech API (e.g. Chrome, Edge, or Safari)."
+      );
+      return;
+    }
+
+    if (words.length === 0) {
+      renderWords(scriptInput.value);
+      currentWordIndex = 0;
+    }
+
+    if (words.length === 0) {
+      return;
+    }
+
+    stopRecognition();
+    processedTokenCount = 0;
+    recognition = ensureRecognition();
+    if (!recognition) {
+      return;
+    }
+
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error("Speech recognition start failed:", error);
+      recognition = null;
+      return;
+    }
+
+    micStatus.hidden = false;
+    setRunningState(true);
+    lastTimestamp = null;
+    return;
+  }
+
   if (isVerticalMirrorEnabled() && prompterViewport.scrollTop === 0) {
     setViewportScrollTop(getMaxScrollTop());
   }
@@ -185,9 +403,29 @@ function stopScrolling() {
     animationFrameId = null;
   }
   lastTimestamp = null;
+  stopRecognition();
 }
 
 scriptInput.addEventListener("input", updatePromptText);
+
+modeSelect.addEventListener("change", () => {
+  stopScrolling();
+  mode = modeSelect.value;
+
+  if (mode === "auto" && !isSpeechRecognitionSupported()) {
+    window.alert(
+      "Automatic Scrolling requires a browser that supports the Web Speech API (e.g. Chrome, Edge, or Safari)."
+    );
+    modeSelect.value = "fixed";
+    mode = "fixed";
+  }
+
+  currentWordIndex = 0;
+  processedTokenCount = 0;
+  updateModeBodyClass();
+  updatePromptText();
+  setViewportScrollTop(0);
+});
 
 startPauseBtn.addEventListener("click", () => {
   if (!isScrolling) {
@@ -236,8 +474,8 @@ mirrorVerticalToggle.addEventListener("change", () => {
     return;
   }
 
-  // Reset position when direction changes to keep expected reading flow.
   stopScrolling();
+  currentWordIndex = 0;
   if (isVerticalMirrorEnabled()) {
     setViewportScrollTop(getMaxScrollTop());
   } else {
@@ -254,7 +492,6 @@ async function toggleFullscreen() {
       await prompterViewport.requestFullscreen();
     }
   } catch (error) {
-    // Keep app behavior stable if fullscreen is blocked by browser policy.
     console.error("Fullscreen toggle failed:", error);
   }
 }
@@ -262,7 +499,6 @@ async function toggleFullscreen() {
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 
 document.addEventListener("keydown", (event) => {
-  // Avoid hijacking typing shortcuts while user is editing script text.
   if (document.activeElement === scriptInput) {
     return;
   }
@@ -294,12 +530,10 @@ document.addEventListener("keydown", (event) => {
       break;
     case "<":
       event.preventDefault();
-      // Shift+, on US keyboards.
       adjustMargins(-10);
       break;
     case ">":
       event.preventDefault();
-      // Shift+. on US keyboards.
       adjustMargins(10);
       break;
     case "f":
@@ -325,11 +559,18 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+function updateFullscreenButtonLabel() {
+  const isFullscreen = document.fullscreenElement === prompterViewport;
+  fullscreenBtn.textContent = isFullscreen ? "Exit Fullscreen" : "Fullscreen";
+}
+
 document.addEventListener("fullscreenchange", updateFullscreenButtonLabel);
 
 updateSpeedLabel();
 updateFontSize();
 updateMargins();
 updateMirrorTransform();
+mode = modeSelect.value;
+updateModeBodyClass();
 updatePromptText();
 updateFullscreenButtonLabel();

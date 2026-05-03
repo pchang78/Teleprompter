@@ -19,22 +19,33 @@
       </section>
 
       <section class="controls" aria-label="Teleprompter controls">
+        <label for="modeSelect" class="control-label">
+          Mode
+          <select id="modeSelect" class="control-select" aria-label="Scrolling mode">
+            <option value="fixed" selected>Fixed Speed</option>
+            <option value="auto">Automatic Scrolling</option>
+          </select>
+        </label>
+        <span id="micStatus" class="mic-status" hidden>Listening…</span>
+
         <button id="startPauseBtn" class="control-btn" disabled>Start</button>
         <button id="fullscreenBtn" class="control-btn" type="button">Fullscreen</button>
 
-        <label for="speedSlider" class="control-label">
-          Speed
-          <span id="speedValue">50 px/s</span>
-        </label>
-        <input
-          id="speedSlider"
-          class="control-range"
-          type="range"
-          min="10"
-          max="300"
-          value="50"
-          step="5"
-        />
+        <div class="speed-control-group">
+          <label for="speedSlider" class="control-label">
+            Speed
+            <span id="speedValue">50 px/s</span>
+          </label>
+          <input
+            id="speedSlider"
+            class="control-range"
+            type="range"
+            min="10"
+            max="300"
+            value="50"
+            step="5"
+          />
+        </div>
 
         <label for="leftMarginSlider" class="control-label">
           Left Margin
