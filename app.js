@@ -41,7 +41,7 @@ let recognition = null;
 let processedTokenCount = 0;
 
 const MIN_FONT_SIZE = 24;
-const MAX_FONT_SIZE = 90;
+const MAX_FONT_SIZE = 110;
 const SCROLL_JUMP_LINES = 3;
 const SPEECH_MATCH_WINDOW = 8;
 const WORD_FLASH_MS = 600;
@@ -152,6 +152,11 @@ function adjustScrollSpeed(delta) {
 function updateFontSize() {
   prompterText.style.fontSize = `${fontSize}px`;
   fontSizeValue.textContent = `${fontSize}px`;
+}
+
+function adjustFontSize(delta) {
+  fontSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, fontSize + delta));
+  updateFontSize();
 }
 
 function updateMargins() {
@@ -451,13 +456,11 @@ rightMarginSlider.addEventListener("input", (event) => {
 });
 
 fontDownBtn.addEventListener("click", () => {
-  fontSize = Math.max(MIN_FONT_SIZE, fontSize - 2);
-  updateFontSize();
+  adjustFontSize(-2);
 });
 
 fontUpBtn.addEventListener("click", () => {
-  fontSize = Math.min(MAX_FONT_SIZE, fontSize + 2);
-  updateFontSize();
+  adjustFontSize(2);
 });
 
 darkModeToggle.addEventListener("change", () => {
@@ -535,6 +538,14 @@ document.addEventListener("keydown", (event) => {
     case ">":
       event.preventDefault();
       adjustMargins(10);
+      break;
+    case "_":
+      event.preventDefault();
+      adjustFontSize(-2);
+      break;
+    case "+":
+      event.preventDefault();
+      adjustFontSize(2);
       break;
     case "f":
       event.preventDefault();
