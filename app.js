@@ -17,6 +17,9 @@ const fontSizeValue = document.getElementById("fontSizeValue");
 const darkModeToggle = document.getElementById("darkModeToggle");
 const mirrorModeToggle = document.getElementById("mirrorModeToggle");
 const mirrorVerticalToggle = document.getElementById("mirrorVerticalToggle");
+const scrubber = document.getElementById("scrubber");
+const lineBackBtn = document.getElementById("lineBackBtn");
+const lineForwardBtn = document.getElementById("lineForwardBtn");
 
 let scrollSpeed = Number(speedSlider.value);
 let isScrolling = false;
@@ -26,6 +29,7 @@ let preciseScrollTop = 0;
 let fontSize = 42;
 let leftMargin = Number(leftMarginSlider.value);
 let rightMargin = Number(rightMarginSlider.value);
+let isScrubberDragging = false;
 
 /** @type {'fixed' | 'auto'} */
 let mode = "fixed";
@@ -202,6 +206,20 @@ function setViewportScrollTop(nextScrollTop) {
   const clampedScrollTop = Math.max(0, Math.min(getMaxScrollTop(), nextScrollTop));
   preciseScrollTop = clampedScrollTop;
   prompterViewport.scrollTop = clampedScrollTop;
+  updateScrubberPosition();
+}
+
+function updateScrubberPosition() {
+  const maxScrollTop = getMaxScrollTop();
+  const position = maxScrollTop > 0 ? (prompterViewport.scrollTop / maxScrollTop) * 100 : 0;
+  scrubber.value = String(position);
+}
+
+function handleScrubberChange(event) {
+  const maxScrollTop = getMaxScrollTop();
+  const position = Number(event.target.value);
+  const nextScrollTop = (position / 100) * maxScrollTop;
+  setViewportScrollTop(nextScrollTop);
 }
 
 function getScrollJumpAmount() {
@@ -455,6 +473,16 @@ rightMarginSlider.addEventListener("input", (event) => {
   updateMargins();
 });
 
+scrubber.addEventListener("input", handleScrubberChange);
+
+lineBackBtn.addEventListener("click", () => {
+  jumpScroll(-1);
+});
+
+lineForwardBtn.addEventListener("click", () => {
+  jumpScroll(1);
+});
+
 fontDownBtn.addEventListener("click", () => {
   adjustFontSize(-2);
 });
@@ -483,6 +511,12 @@ mirrorVerticalToggle.addEventListener("change", () => {
     setViewportScrollTop(getMaxScrollTop());
   } else {
     setViewportScrollTop(0);
+  }
+});
+
+prompterViewport.addEventListener("scroll", () => {
+  if (!isScrubberDragging) {
+    updateScrubberPosition();
   }
 });
 

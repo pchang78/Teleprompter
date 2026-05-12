@@ -31,6 +31,15 @@
         <button id="startPauseBtn" class="control-btn" disabled>Start</button>
         <button id="fullscreenBtn" class="control-btn" type="button">Fullscreen</button>
 
+        <div class="scrubber-group">
+          <button id="lineBackBtn" class="control-btn" type="button" aria-label="Go back lines">−</button>
+          <div class="scrubber-container">
+            <label for="scrubber" class="control-label">Position</label>
+            <input id="scrubber" class="scrubber" type="range" min="0" max="100" value="0" aria-label="Script position" />
+          </div>
+          <button id="lineForwardBtn" class="control-btn" type="button" aria-label="Go forward lines">+</button>
+        </div>
+
         <div class="speed-control-group">
           <label for="speedSlider" class="control-label">
             Speed
