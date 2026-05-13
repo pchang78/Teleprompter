@@ -9,6 +9,7 @@ A lightweight web-based teleprompter built with plain HTML, CSS, and JavaScript.
   - **Fixed Speed**: steady auto-scroll with Start/Pause (Start is enabled only when script text exists)
   - **Automatic Scrolling**: uses the microphone and the browser Web Speech API to listen while you read, and tries to keep the viewport aligned with your place in the script. This feature is in its **initial state** and still needs refinement (accuracy, edge cases, and polish).
 - Adjustable scroll speed for **Fixed Speed** mode (`10` to `300 px/s`; the speed control is inactive while **Automatic Scrolling** is selected)
+- **Position slider** to scrub anywhere in the script, plus **−** / **+** buttons to step back or forward a few lines at a time
 - Font size controls
 - Left and right margin controls
 - Fullscreen teleprompter mode
@@ -40,6 +41,8 @@ No build tools are required.
 - **Start / Pause**: Begin or pause scrolling (fixed speed) or speech recognition (automatic)
 - **Fullscreen**: Expand teleprompter viewport to full screen
 - **Speed slider**: Set scroll speed for **Fixed Speed** mode (`10` to `300 px/s`)
+- **Position slider**: Scrub to any point in the script; the slider also tracks the current location as the script auto-scrolls
+- **− / +** (next to **Position**): Jump backward or forward by a few lines without changing speed or mode
 - **Left Margin / Right Margin**: Adjust text side spacing
 - **A- / A+**: Decrease or increase font size
 - **Dark Mode**: Toggle light/dark appearance
