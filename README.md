@@ -54,6 +54,7 @@ No build tools are required.
 - `Arrow Left`: Decrease speed by `10 px/s`
 - `Arrow Right`: Increase speed by `10 px/s`
 - `<` / `>`: Decrease / increase both side margins by `10 px`
+- `_` / `+`: Decrease / increase font size by `2 px` (same step as **A-** / **A+**)
 - `f`: Toggle fullscreen
 - `v`: Toggle vertical mirror mode
 
